@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Java
+*.class
+target/
+out/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

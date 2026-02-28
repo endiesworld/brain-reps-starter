@@ -1,0 +1,13 @@
+[project]
+name = "annotated-fastapi-lab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.110",
+    "pydantic-settings>=2",
+    "sqlalchemy>=2",
+    "uvicorn[standard]>=0.41.0",
+]

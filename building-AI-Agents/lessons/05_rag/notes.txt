@@ -1,0 +1,7 @@
+An agent loop is the repeated cycle of choosing an action, running it, observing the result, and deciding what to do next.
+A tool is a regular function exposed to the model so it can perform work outside text generation.
+Memory stores useful state outside the current user message.
+Retrieval finds relevant knowledge and injects it into the model context before answering.
+
+This is not what an agent loop means, please ignore.
+

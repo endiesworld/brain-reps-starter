@@ -11,6 +11,7 @@ It starts without external APIs so you can understand the mechanics before addin
 4. `04_memory`: persist small pieces of useful information between runs.
 5. `05_rag`: retrieve relevant notes before answering.
 6. `06_messages`: represent a turn as explicit user, tool, and assistant messages.
+7. `07_multi_turn_transcript`: keep one transcript across multiple user turns.
 
 See `ROADMAP.md` for the path from these fundamentals to a hands-on multi-agent coding assistant.
 
@@ -30,6 +31,7 @@ python3 lessons/03_agent_loop/main.py
 python3 lessons/04_memory/main.py
 python3 lessons/05_rag/main.py
 python3 lessons/06_messages/main.py
+python3 lessons/07_multi_turn_transcript/main.py
 ```
 
 ## How To Learn

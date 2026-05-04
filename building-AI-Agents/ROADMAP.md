@@ -16,7 +16,7 @@ Build a local multi-agent coding assistant that can inspect a repo, plan work, e
 ## Phase 2: Stronger Local Agent Mechanics
 
 - [x] Replace fake model decisions with explicit message objects.
-- [ ] Add a transcript so each turn can see prior user, assistant, tool, and observation messages.
+- [x] Add a transcript so each turn can see prior user, assistant, tool, and observation messages.
 - [ ] Add a command-running tool with a strict allowlist.
 - [ ] Add a file-reading tool.
 - [ ] Add a file-editing tool that writes small patches.

@@ -26,9 +26,11 @@ Lessons 1-3 were reviewed and cleaned so function names, return annotations, and
 
 `lessons/06_messages/main.py` was added as the first Phase 2 lesson. It introduces explicit `Message` objects, `ToolCall` objects, a one-turn transcript, and a tool observation message.
 
+`lessons/07_multi_turn_transcript/main.py` was added to keep one transcript across multiple user turns. It shows the model using earlier tool messages to answer a later user question.
+
 ## Next Learning Step
 
-Extend `lessons/06_messages` from a one-turn transcript into a multi-turn transcript so later lessons can inspect conversation history before deciding what to do.
+Add a command-running tool with a strict allowlist. This starts the path toward a coding agent that can inspect and verify a repo without giving it arbitrary shell access.
 
 ## Durable Decisions
 

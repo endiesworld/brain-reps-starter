@@ -6,4 +6,5 @@
 - [x] Shape the lesson sequence toward the long-term goal: a hands-on multi-agent coding app.
 - [x] Start Phase 2 by adding explicit message objects to a new lesson.
 - [x] Add a multi-turn transcript lesson.
-- [ ] Add a command-running tool with a strict allowlist.
+- [x] Add a command-running tool with a strict allowlist.
+- [ ] Add a file-reading tool.

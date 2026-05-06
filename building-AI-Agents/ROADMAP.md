@@ -17,7 +17,7 @@ Build a local multi-agent coding assistant that can inspect a repo, plan work, e
 
 - [x] Replace fake model decisions with explicit message objects.
 - [x] Add a transcript so each turn can see prior user, assistant, tool, and observation messages.
-- [ ] Add a command-running tool with a strict allowlist.
+- [x] Add a command-running tool with a strict allowlist.
 - [ ] Add a file-reading tool.
 - [ ] Add a file-editing tool that writes small patches.
 - [ ] Add failure handling for missing tools, bad tool arguments, and max-step exhaustion.

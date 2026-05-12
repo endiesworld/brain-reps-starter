@@ -29,6 +29,8 @@ ALLOWED_COMMANDS = {
     ("ls",),
     ("python3", "--version"),
     ("python3", "lessons/01_prompt_response/main.py"),
+    ("which", "node"),
+    ("hostnamectl", "status"),
 }
 
 
@@ -64,6 +66,15 @@ def fake_model(transcript: list[Message]) -> str:
 
     if "delete files" in latest_text:
         return make_tool_call("run_command", "rm -rf lessons")
+    
+    if "node" in latest_text:
+        return make_tool_call("run_command", "which node")
+    
+    if "os info" in latest_text or "system info" in latest_text or "hostname" in latest_text:
+        return make_tool_call("run_command", "hostnamectl status")
+    
+    if "request new command" in latest_text:
+        return make_message("I would like to run 'df -h' to check disk usage.")
 
     return make_message("I do not need a command for that.")
 
@@ -152,7 +163,25 @@ def main() -> None:
     print_transcript(transcript)
 
     # TODO: Add one more safe command to ALLOWED_COMMANDS.
+    print("==============================")
+    prompt = "which node is installed?"
+    print(f"\nUSER: {prompt}")
+    run_turn(transcript, prompt, tools)
+    print()
+    
+    print("==============================")
+    prompt = "Give me system info"
+    print(f"\nUSER: {prompt}")
+    run_turn(transcript, prompt, tools)
+    print()    
+    
     # TODO: Add a prompt that asks the model to request your new command.
+    print("==============================")
+    prompt = "Request new command to check disk usage"
+    print(f"\nUSER: {prompt}")
+    run_turn(transcript, prompt, tools)
+    print()
+    print_transcript(transcript)
 
 
 if __name__ == "__main__":

@@ -30,9 +30,11 @@ Lessons 1-3 were reviewed and cleaned so function names, return annotations, and
 
 `lessons/08_command_tool/main.py` was added to show a command-running tool protected by an exact command allowlist. It demonstrates approved inspection commands and a blocked destructive command request.
 
+`lessons/09_file_reading_tool/main.py` was added to show a path-safe file-reading tool. It demonstrates reading project files, returning contents as tool observations, and blocking paths that escape the project root.
+
 ## Next Learning Step
 
-Add a file-reading tool. This is the next step toward a coding agent that can inspect specific files before proposing changes.
+Add a file-editing tool. This is the next step toward a coding agent that can make small scoped changes after inspecting files.
 
 ## Durable Decisions
 

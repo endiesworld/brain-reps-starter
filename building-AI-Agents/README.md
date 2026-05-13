@@ -15,6 +15,7 @@ It starts without external APIs so you can understand the mechanics before addin
 8. `08_command_tool`: run only allowlisted shell commands through a tool.
 9. `09_file_reading_tool`: read project files through a path-safe tool.
 10. `10_file_editing_tool`: edit project files with small, path-safe replacements.
+11. `11_failure_handling`: handle unknown tools, bad arguments, and max-step exhaustion.
 
 See `ROADMAP.md` for the path from these fundamentals to a hands-on multi-agent coding assistant.
 
@@ -38,6 +39,7 @@ python3 lessons/07_multi_turn_transcript/main.py
 python3 lessons/08_command_tool/main.py
 python3 lessons/09_file_reading_tool/main.py
 python3 lessons/10_file_editing_tool/main.py
+python3 lessons/11_failure_handling/main.py
 ```
 
 ## How To Learn

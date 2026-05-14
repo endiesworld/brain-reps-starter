@@ -1,13 +1,9 @@
 """Lesson 12: real model loop with local tool execution.
 
-The earlier lessons used fake_model so the agent mechanics were easy to see.
-This lesson keeps the same local tool loop, but makes the model function
-swappable:
+This lesson uses only a real model call. There is no fake model and no fallback
+model path.
 
-- fake_model runs with no API key and keeps the lesson deterministic.
-- real_model calls the OpenAI Responses API when USE_REAL_MODEL=1.
-
-The important boundary is this: the model only decides what JSON to return.
+The important boundary is this: the real model only decides what JSON to return.
 Your Python code still parses that JSON, runs local tools, records observations,
 handles failures, and stops after MAX_STEPS.
 """
@@ -25,7 +21,10 @@ MAX_STEPS = 4
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DOTENV_PATH = PROJECT_ROOT / ".env"
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
-DEFAULT_MODEL = "gpt-5.4-mini"
+DEFAULT_MODEL = "gpt-5-mini"
+USE_MODEL = "gpt-5.5"
+
+MAX_FILE_CHARS = 1200
 
 
 @dataclass(frozen=True)
@@ -38,9 +37,6 @@ class Message:
 class ToolCall:
     name: str
     argument: str
-
-
-ModelFunction = Callable[[list[Message]], str]
 
 
 def load_dotenv(path: Path = DOTENV_PATH) -> None:
@@ -64,62 +60,23 @@ def load_dotenv(path: Path = DOTENV_PATH) -> None:
             os.environ[key] = value
 
 
-def make_message(content: str) -> str:
-    return json.dumps({"type": "message", "role": "assistant", "content": content})
-
-
-def make_tool_call(name: str, argument: str) -> str:
-    return json.dumps({"type": "tool_call", "name": name, "argument": argument})
-
-
-def make_count_words_argument(text: str) -> str:
-    return json.dumps({"text": text})
-
-
-def latest_user_text(transcript: list[Message]) -> str:
-    for message in reversed(transcript):
-        if message.role == "user":
-            return message.content.lower()
-    return ""
-
-
-def fake_model(transcript: list[Message]) -> str:
-    latest_message = transcript[-1]
-    user_text = latest_user_text(transcript)
-
-    if latest_message.role == "tool" and latest_message.content.startswith("ERROR:"):
-        return make_message(f"I could not complete the request.\n{latest_message.content}")
-
-    if latest_message.role == "tool":
-        return make_message(f"Tool result:\n{latest_message.content}")
-
-    if latest_message.role != "user":
-        return make_message("I am waiting for a user request.")
-
-    if "count words" in user_text:
-        return make_tool_call("count_words", make_count_words_argument("real model loop"))
-
-    if "uppercase" in user_text:
-        return make_tool_call("uppercase_text", json.dumps({"text": "local tools still run locally"}))
-
-    if "bad tool" in user_text:
-        return make_tool_call("missing_tool", "{}")
-
-    return make_message("I can answer directly without a tool.")
-
-
 def build_model_prompt(transcript: list[Message]) -> str:
     transcript_text = "\n".join(
         f"{message.role.upper()}: {message.content}" for message in transcript
     )
     return (
-        "You are the model inside a small teaching agent.\n"
+        "You are the real model inside a small teaching agent.\n"
         "Return exactly one JSON object and no Markdown.\n"
         "Allowed response shapes:\n"
         '{"type": "message", "role": "assistant", "content": "..."}\n'
         '{"type": "tool_call", "name": "count_words", "argument": "{\\"text\\": \\"...\\"}"}\n'
         '{"type": "tool_call", "name": "uppercase_text", "argument": "{\\"text\\": \\"...\\"}"}\n'
-        "Use a tool only when it helps answer the latest user message.\n\n"
+        '{"type": "tool_call", "name": "read_file", "argument": "{\\"path\\": \\"...\\"}"}\n'
+        "When the latest user message asks you to count words, call count_words.\n"
+        "When the latest user message asks you to uppercase text, call uppercase_text.\n"
+        "When the latest user message asks you to summarize a file, call read_file.\n"
+        "When the latest transcript message is a TOOL observation, answer with a final message.\n"
+        "Use a direct message only when no tool is needed.\n\n"
         f"Transcript:\n{transcript_text}"
     )
 
@@ -137,13 +94,13 @@ def extract_response_text(response_data: dict) -> str:
     return "\n".join(part for part in output_parts if part).strip()
 
 
-def real_model(transcript: list[Message]) -> str:
+def call_real_model(transcript: list[Message]) -> str:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        return make_message("Set OPENAI_API_KEY before running with USE_REAL_MODEL=1.")
+        raise RuntimeError("Set OPENAI_API_KEY in your shell or in the repo .env file.")
 
     request_body = {
-        "model": os.environ.get("OPENAI_MODEL", DEFAULT_MODEL),
+        "model": USE_MODEL, # os.environ.get("OPENAI_MODEL", DEFAULT_MODEL),
         "input": build_model_prompt(transcript),
     }
 
@@ -162,21 +119,15 @@ def real_model(transcript: list[Message]) -> str:
             response_data = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
         error_text = error.read().decode("utf-8", errors="replace")
-        return make_message(f"OpenAI API error: {error.code}\n{error_text}")
+        raise RuntimeError(f"OpenAI API error: {error.code}\n{error_text}") from error
     except urllib.error.URLError as error:
-        return make_message(f"Network error: {error.reason}")
+        raise RuntimeError(f"Network error: {error.reason}") from error
 
     response_text = extract_response_text(response_data)
     if not response_text:
-        return make_message("OpenAI API returned no text output.")
+        raise RuntimeError("OpenAI API returned no text output.")
 
     return response_text
-
-
-def choose_model_function() -> ModelFunction:
-    if os.environ.get("USE_REAL_MODEL") == "1":
-        return real_model
-    return fake_model
 
 
 def parse_model_output(raw_output: str) -> Message | ToolCall:
@@ -208,6 +159,42 @@ def uppercase_text(argument: str) -> str:
 
     return text.upper()
 
+def safe_project_path(path_text: str) -> Path | None:
+    requested_path = (PROJECT_ROOT / path_text).resolve()
+    
+    print(f"Requested path: {requested_path}")
+
+    if requested_path == PROJECT_ROOT:
+        return None
+
+    if PROJECT_ROOT not in requested_path.parents:
+        return None
+
+    return requested_path
+
+def read_file(argument: str) -> str:
+    data = parse_tool_argument(argument, required_keys={"path"})
+    path = safe_project_path(data["path"])
+    
+    print(f"Safe path: {path}")
+    if path is None:
+        return f"Blocked path: {path}"
+
+    if not path.exists():
+        return f"File not found: {data['path']}"
+
+    if not path.is_file():
+        return f"Not a file: {data['path']}"
+
+    content = path.read_text(encoding="utf-8")
+    if not content.strip():
+        return f"{data['path']} is empty."
+
+    # if len(content) > MAX_FILE_CHARS:
+    #     content = content[:MAX_FILE_CHARS].rstrip() + "\n... (truncated)"
+
+    return f"{data['path']}:\n{content}"
+
 
 def parse_tool_argument(argument: str, required_keys: set[str]) -> dict:
     try:
@@ -236,14 +223,13 @@ def call_tool(tool_call: ToolCall, tools: dict[str, Callable[[str], str]]) -> st
 def run_agent_loop(
     transcript: list[Message],
     user_prompt: str,
-    model: ModelFunction,
     tools: dict[str, Callable[[str], str]],
 ) -> None:
     transcript.append(Message(role="user", content=user_prompt))
 
     for step_number in range(1, MAX_STEPS + 1):
         print(f"STEP {step_number}")
-        raw_model_output = model(transcript)
+        raw_model_output = call_real_model(transcript)
         print("RAW MODEL OUTPUT:", raw_model_output)
 
         try:
@@ -279,30 +265,32 @@ def print_transcript(transcript: list[Message]) -> None:
 def main() -> None:
     load_dotenv()
 
-    model = choose_model_function()
     tools = {
         "count_words": count_words,
         "uppercase_text": uppercase_text,
+        "read_file": read_file,
+        
     }
 
     prompts = [
-        "Count words",
-        "Uppercase this text",
-        "Use a bad tool",
+        "Count the words in exactly this text: real models call local tools",
+        "Uppercase exactly this text: local tools still run locally",
+        "Answer directly: what decides whether a tool runs in this program?",
     ]
-
-    for prompt in prompts:
+    prompts.append("Summarize the contents of practice/python_engineering/ROADMAP.md")
+    prompts.append("Write a brief summary on Agent Harness")
+    for prompt in prompts[3:]:
         print("=" * 60)
         print(f"USER: {prompt}")
         transcript: list[Message] = []
-        run_agent_loop(transcript, prompt, model, tools)
+        run_agent_loop(transcript, prompt, tools)
         print()
         print_transcript(transcript)
         print()
 
-    # TODO: Run once with the fake model and identify where local tool execution happens.
-    # TODO: Set USE_REAL_MODEL=1 and OPENAI_API_KEY, then run the lesson with a real model.
-    # TODO: Add one more local tool and teach both build_model_prompt and fake_model about it.
+    # TODO: Change OPENAI_MODEL and observe whether the JSON decisions change.
+    # TODO: Add one more local tool, then teach build_model_prompt when to call it.
+    # TODO: Add a prompt that should not use a tool and confirm the model answers directly.
 
 
 if __name__ == "__main__":

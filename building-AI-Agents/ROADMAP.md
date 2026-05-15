@@ -21,11 +21,11 @@ Build a local multi-agent coding assistant that can inspect a repo, plan work, e
 - [x] `09_file_reading_tool`: Add a file-reading tool with path safety.
 - [x] `10_file_editing_tool`: Add a file-editing tool that writes small patches.
 - [x] `11_failure_handling`: Add failure handling for missing tools, bad tool arguments, and max-step exhaustion.
-- [ ] `12_real_model_loop`: Replace the fake model with a real model call while keeping local tool execution.
+- [x] `12_real_model_loop`: Replace the fake model with a real model call while keeping local tool execution.
 
 ## Phase 3: Coding Agent Basics
 
-- [ ] `13_repo_scanner`: Build a repo scanner that lists files and searches code.
+- [x] `13_repo_scanner`: Build a repo scanner that lists files and searches code.
 - [ ] `14_code_question_answering`: Teach the agent to answer questions using retrieved code context.
 - [ ] `15_patch_and_verify`: Teach the agent to propose a small patch and run a verification command after editing.
 
